@@ -44,7 +44,6 @@
         patientId int,
          startTime DATETIME DEFAULT CURRENT_TIMESTAMP,
         description TEXT,
-        accepted tinyint DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),

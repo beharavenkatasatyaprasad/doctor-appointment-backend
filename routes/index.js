@@ -9,6 +9,7 @@ var fs = require('fs');
 const fileDir = './uploads';
 
 const multer = require('multer');
+const { sendEmail } = require('../utils/mailer');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, fileDir);
@@ -379,6 +380,8 @@ router.post('/book-slot', async (req, res) => {
   try {
     const { slotId, patientId, description } = req.body;
     let slotToBeBooked = await slots.findOne({ where: { id: slotId } });
+    let doctor = await users.findOne({ where: { id: slotToBeBooked.doctorId } });
+    let patient = await users.findOne({ where: { id: patientId } });
 
     if (!slotToBeBooked || slotToBeBooked.booked) {
       res.json({
@@ -395,7 +398,25 @@ router.post('/book-slot', async (req, res) => {
     });
 
     slotToBeBooked.booked = true;
+
     await slotToBeBooked.save();
+
+    // to doctor
+    let messagetoDoctor = {
+      to: doctor.email,
+      subject: 'New Appointment',
+      text: `${patient.name} had booked an appointment with you on ${moment(slotToBeBooked.startTime).format("MMMM Do YYYY, h:mm a")}.`,
+    };
+
+    // to patient
+    let messagetoPatient = {
+      to: patient.email,
+      subject: 'Appointment booked successfully!',
+      text: `You had booked an appointment with ${doctor.name} on ${moment(slotToBeBooked.startTime).format("MMMM Do YYYY, h:mm a")}.`,
+    };
+
+    await sendEmail(messagetoDoctor);
+    await sendEmail(messagetoPatient);
 
     res.json({
       success: true,
@@ -422,7 +443,7 @@ router.post('/appointments', async (req, res) => {
       let slot = await slots.findOne({ where: eachApp.slotId });
       let isPast = moment(slot.startTime).isBefore();
       let exclude = ['password'];
-      if(!isPast){
+      if (!isPast) {
         exclude = [...exclude, 'email', 'phone'];
       }
       let patient = await users.findOne({
@@ -460,10 +481,21 @@ router.post('/prescription', async (req, res) => {
     const { prescription, appointmentId } = req.body;
 
     let app = await appointments.findOne({ where: { id: appointmentId } });
+    let doctor = await users.findOne({ where: { id: app.doctorId } });
+    let patient = await users.findOne({ where: { id: app.patientId } });
 
     if (prescription) app.prescription = prescription;
 
     await app.save();
+
+    // to patient
+    let messagetoPatient = {
+      to: patient.email,
+      subject: 'Doctor has updated the prescription!',
+      text: `Dr.${doctor.name} has updated the prescription / report for your consultation. Please have a look.`,
+    };
+
+    await sendEmail(messagetoPatient);
 
     res.json({
       success: true,
