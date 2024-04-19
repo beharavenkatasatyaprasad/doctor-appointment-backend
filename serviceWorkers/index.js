@@ -41,6 +41,7 @@ const appointmentsRemainderService = async () => {
 
       await sendEmail(messagetoDoctor);
       await sendEmail(messagetoPatient);
+      return;
     }
   }
 };

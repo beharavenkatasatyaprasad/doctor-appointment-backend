@@ -27,11 +27,6 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    accepted: {
-      type: DataTypes.TINYINT,
-      allowNull: true,
-      defaultValue: 0
-    },
     slotId: {
       type: DataTypes.INTEGER,
       allowNull: true,
